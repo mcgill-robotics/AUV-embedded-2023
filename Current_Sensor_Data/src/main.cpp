@@ -13,7 +13,7 @@ float GAIN = 100;
 #define CURRENT_THRUSTER_PIN_6 PIN_A6
 
 int current_calculation(int voltage){
-  return voltage;
+  return (voltage-V_REF)/(GAIN*R_SHUNT);
 }
 
 int system_current;
@@ -31,13 +31,12 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  system_current =  analogRead(CURRENT_SYSTEM_PIN);
-  system_current = system_current * 10;
-  thruster_1_current = analogRead(CURRENT_THRUSTER_PIN_1);
-  thruster_2_current = analogRead(CURRENT_THRUSTER_PIN_2);
-  thruster_3_current = analogRead(CURRENT_THRUSTER_PIN_3);
-  thruster_4_current = analogRead(CURRENT_THRUSTER_PIN_4);
-  thruster_5_current = analogRead(CURRENT_THRUSTER_PIN_5);
-  thruster_6_current = analogRead(CURRENT_THRUSTER_PIN_6);
+  system_current =  current_calculation(analogRead(CURRENT_SYSTEM_PIN));
+  thruster_1_current = current_calculation(analogRead(CURRENT_THRUSTER_PIN_1));
+  thruster_2_current = current_calculation(analogRead(CURRENT_THRUSTER_PIN_2));
+  thruster_3_current = current_calculation(analogRead(CURRENT_THRUSTER_PIN_3));
+  thruster_4_current = current_calculation(analogRead(CURRENT_THRUSTER_PIN_4));
+  thruster_5_current = current_calculation(analogRead(CURRENT_THRUSTER_PIN_5));
+  thruster_6_current = current_calculation(analogRead(CURRENT_THRUSTER_PIN_6));
  
 }
