@@ -1,4 +1,4 @@
 #include <Arduino.h>
 
-void setup();
-void loop();
+void power_setup();
+void power_loop();

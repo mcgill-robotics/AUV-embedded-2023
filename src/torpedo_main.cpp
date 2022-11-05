@@ -1,10 +1,10 @@
 #include <Arduino.h>
-#include "power_main.h"
+#include "torpedo_main.h"
 
-void power_setup(){
+void torpedo_setup(){
       // put your setup code here, to run once:
 }
 
-void power_loop(){
+void torpedo_loop(){
       // put your main code here, to run repeatedly:
 }

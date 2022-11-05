@@ -1,10 +1,10 @@
 #include <Arduino.h>
-#include "power_main.h"
+#include "hydrophone_main.h"
 
-void power_setup(){
+void hydrophone_setup(){
       // put your setup code here, to run once:
 }
 
-void power_loop(){
+void hydrophone_loop(){
       // put your main code here, to run repeatedly:
 }
