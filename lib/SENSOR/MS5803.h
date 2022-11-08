@@ -1,8 +1,14 @@
+/**
+ * Pressure Sensor function calls
+*/
+
+
 #ifndef MS5803_H
 #define MS5803_H
 
 #include <Wire.h>
 #include <Arduino.h>
+
 class MS5803 {
     public:
         MS5803(byte address);
