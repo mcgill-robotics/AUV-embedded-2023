@@ -72,12 +72,12 @@ void MS5803::calculateTemperature() {
 
 //Calculate pressure and temperature with second order compensation
 void MS5803::calculatePressure() {
+  calculateTemperature();
   uint32_t rawPressure = adcRead(PRESSURE_ADC_COMMAND);
   int64_t offset = (coefficients[1]<<18) + (coefficients[3]*dT>>5);
   int64_t sensitivity = (coefficients[0]<<17) + (coefficients[2]*dT>>7);
   //Second order compensation
   if(SECOND_ORDER) {
-    calculateTemperature();
     int64_t t2, off2, sens2;
       if(temperature<2000) {
         t2 = 3 * dT>>33;
