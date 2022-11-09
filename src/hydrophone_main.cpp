@@ -1,3 +1,5 @@
+#ifdef HYDROPHONE
+
 #include <Arduino.h>
 #include "hydrophone_main.h"
 
@@ -8,3 +10,5 @@ void hydrophone_setup(){
 void hydrophone_loop(){
     // put your main code here, to run repeatedly:
 }
+
+#endif // HYDROPHONE

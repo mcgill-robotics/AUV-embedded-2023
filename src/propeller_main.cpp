@@ -1,3 +1,5 @@
+#ifdef PROPELLER
+
 #include <Arduino.h>
 #include "propeller_main.h"
 
@@ -8,3 +10,5 @@ void propeller_setup(){
 void propeller_loop(){
       // put your main code here, to run repeatedly:
 }
+
+#endif // PROPERLLER

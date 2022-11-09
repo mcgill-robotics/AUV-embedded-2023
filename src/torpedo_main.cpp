@@ -1,3 +1,5 @@
+#ifdef TORPEDO
+
 #include <Arduino.h>
 #include "torpedo_main.h"
 
@@ -8,3 +10,5 @@ void torpedo_setup(){
 void torpedo_loop(){
     // put your main code here, to run repeatedly:
 }
+
+#endif // TORPEDO

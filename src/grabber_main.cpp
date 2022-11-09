@@ -1,3 +1,5 @@
+#ifdef GRABBER
+
 #include <Arduino.h>
 #include "grabber_main.h"
 
@@ -8,3 +10,5 @@ void grabber_setup(){
 void grabber_loop(){
     // put your main code here, to run repeatedly:
 }
+
+#endif // GRABBER
