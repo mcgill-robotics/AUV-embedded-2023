@@ -22,6 +22,54 @@
 #define CAN_MSR_SAMP (10U)
 #define CAN_MSR_RX (11U)
 
+/*******************  Bit definition for CAN_TSR register  ********************/
+
+#define CAN_TSR_CODE           (24)                                /* TSR Code. Stores id of next free mailbox. */
+#define CAN_TSR_TME0           (26)                                /*!<Transmit Mailbox 0 Empty */
+#define CAN_TSR_TME1           (27)                                /*!<Transmit Mailbox 1 Empty */
+#define CAN_TSR_TME2           (28)                                /*!<Transmit Mailbox 2 Empty */
+
+/*******************  Bit definition for CAN transmissions  ********************/
+
+#define CAN_RTR_DATA                (0x00000000U)  /*!< Data frame   */
+#define CAN_RTR_REMOTE              (0x00000002U)  /*!< Remote frame *
+
+/******************  Bit definition for CAN_TDL0R register  *******************/
+
+#define CAN_TDL0R_DATA0_Pos    (0U)
+#define CAN_TDL0R_DATA0_Msk    (0xFFUL << CAN_TDL0R_DATA0_Pos)                 /*!< 0x000000FF */
+#define CAN_TDL0R_DATA0        CAN_TDL0R_DATA0_Msk                             /*!<Data byte 0 */
+#define CAN_TDL0R_DATA1_Pos    (8U)
+#define CAN_TDL0R_DATA1_Msk    (0xFFUL << CAN_TDL0R_DATA1_Pos)                 /*!< 0x0000FF00 */
+#define CAN_TDL0R_DATA1        CAN_TDL0R_DATA1_Msk                             /*!<Data byte 1 */
+#define CAN_TDL0R_DATA2_Pos    (16U)
+#define CAN_TDL0R_DATA2_Msk    (0xFFUL << CAN_TDL0R_DATA2_Pos)                 /*!< 0x00FF0000 */
+#define CAN_TDL0R_DATA2        CAN_TDL0R_DATA2_Msk                             /*!<Data byte 2 */
+#define CAN_TDL0R_DATA3_Pos    (24U)
+#define CAN_TDL0R_DATA3_Msk    (0xFFUL << CAN_TDL0R_DATA3_Pos)                 /*!< 0xFF000000 */
+#define CAN_TDL0R_DATA3        CAN_TDL0R_DATA3_Msk                             /*!<Data byte 3 */
+
+/******************  Bit definition for CAN_TDH0R register  *******************/
+#define CAN_TDH0R_DATA4_Pos    (0U)
+#define CAN_TDH0R_DATA4_Msk    (0xFFUL << CAN_TDH0R_DATA4_Pos)                 /*!< 0x000000FF */
+#define CAN_TDH0R_DATA4        CAN_TDH0R_DATA4_Msk                             /*!<Data byte 4 */
+#define CAN_TDH0R_DATA5_Pos    (8U)
+#define CAN_TDH0R_DATA5_Msk    (0xFFUL << CAN_TDH0R_DATA5_Pos)                 /*!< 0x0000FF00 */
+#define CAN_TDH0R_DATA5        CAN_TDH0R_DATA5_Msk                             /*!<Data byte 5 */
+#define CAN_TDH0R_DATA6_Pos    (16U)
+#define CAN_TDH0R_DATA6_Msk    (0xFFUL << CAN_TDH0R_DATA6_Pos)                 /*!< 0x00FF0000 */
+#define CAN_TDH0R_DATA6        CAN_TDH0R_DATA6_Msk                             /*!<Data byte 6 */
+#define CAN_TDH0R_DATA7_Pos    (24U)
+#define CAN_TDH0R_DATA7_Msk    (0xFFUL << CAN_TDH0R_DATA7_Pos)                 /*!< 0xFF000000 */
+#define CAN_TDH0R_DATA7        CAN_TDH0R_DATA7_Msk                             /*!<Data byte 7 *
+
+/******************  Bit definition for CAN_TI0R register  ********************/
+#define CAN_TI0R_TXRQ          (0u)                               /*!<Transmit Mailbox Request */
+#define CAN_TI0R_RTR           (1u)                                /*!<Remote Transmission Request */
+#define CAN_TI0R_IDE           (2u)                                /*!<Identifier Extension */
+#define CAN_TI0R_EXID          (3u)                               /*!<Extended Identifier */
+#define CAN_TI0R_STID          (21u)                               /*!<Standard Identifier or Extended Identifier */
+
 /*******************  Bit definition for GPIO registers  ********************/
 
 /** @defgroup GPIO_pins GPIO pins
