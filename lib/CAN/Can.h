@@ -8,10 +8,34 @@
 class CANBus
 {
 public:
+    /**
+     * Initializes the CAN bus peripheral.
+     */
     static void begin();
     
+    /**
+     * @returns the number of available output mailboxes.
+     */
     static uint32_t getAvailableForWrite();
-    
+
+    /**
+     * Writes a message to the CAN bus.
+     * @param buffer data to be output on the bus. Must be at least `size` bytes long.
+     * @param size number of bytes to write.
+     */
     static void write(uint16_t message_id, const uint8_t data[], uint32_t size);
+    
+    /**
+     * @returns the number of messages available for reading.
+     */
+    static uint32_t getAvailableForRead(uint32_t rx_fifo = 0);
+    
+    /** 
+     * Reads the next available message from the CAN bus.
+     * @param buffer output buffer. Must be at least `size` bytes long.
+     * @returns the standard id of the message
+     */
+    static uint32_t read(uint8_t data_out[], uint32_t size, uint32_t rx_fifo = 0);
 private:
+    static void init_filter(); // #todo: expose
 };

@@ -63,6 +63,62 @@
 #define CAN_TDH0R_DATA7_Msk    (0xFFUL << CAN_TDH0R_DATA7_Pos)                 /*!< 0xFF000000 */
 #define CAN_TDH0R_DATA7        CAN_TDH0R_DATA7_Msk                             /*!<Data byte 7 *
 
+/*******************  Bit definition for CAN_RI0R register  *******************/
+#define CAN_RI0R_RTR_Pos       (1U)
+#define CAN_RI0R_RTR_Msk       (0x1UL << CAN_RI0R_RTR_Pos)                     /*!< 0x00000002 */
+#define CAN_RI0R_RTR           CAN_RI0R_RTR_Msk                                /*!<Remote Transmission Request */
+#define CAN_RI0R_IDE_Pos       (2U)
+#define CAN_RI0R_IDE_Msk       (0x1UL << CAN_RI0R_IDE_Pos)                     /*!< 0x00000004 */
+#define CAN_RI0R_IDE           CAN_RI0R_IDE_Msk                                /*!<Identifier Extension */
+#define CAN_RI0R_EXID_Pos      (3U)
+#define CAN_RI0R_EXID_Msk      (0x3FFFFUL << CAN_RI0R_EXID_Pos)                /*!< 0x001FFFF8 */
+#define CAN_RI0R_EXID          CAN_RI0R_EXID_Msk                               /*!<Extended Identifier */
+#define CAN_RI0R_STID_Pos      (21U)
+#define CAN_RI0R_STID_Msk      (0x7FFUL << CAN_RI0R_STID_Pos)                  /*!< 0xFFE00000 */
+#define CAN_RI0R_STID          CAN_RI0R_STID_Msk                               /*!<Standard Identifier or Extended Identifier */
+
+/*******************  Bit definition for CAN_RDL0R register  ******************/
+#define CAN_RDL0R_DATA0_Pos    (0U)
+#define CAN_RDL0R_DATA0_Msk    (0xFFUL << CAN_RDL0R_DATA0_Pos)                 /*!< 0x000000FF */
+#define CAN_RDL0R_DATA0        CAN_RDL0R_DATA0_Msk                             /*!<Data byte 0 */
+#define CAN_RDL0R_DATA1_Pos    (8U)
+#define CAN_RDL0R_DATA1_Msk    (0xFFUL << CAN_RDL0R_DATA1_Pos)                 /*!< 0x0000FF00 */
+#define CAN_RDL0R_DATA1        CAN_RDL0R_DATA1_Msk                             /*!<Data byte 1 */
+#define CAN_RDL0R_DATA2_Pos    (16U)
+#define CAN_RDL0R_DATA2_Msk    (0xFFUL << CAN_RDL0R_DATA2_Pos)                 /*!< 0x00FF0000 */
+#define CAN_RDL0R_DATA2        CAN_RDL0R_DATA2_Msk                             /*!<Data byte 2 */
+#define CAN_RDL0R_DATA3_Pos    (24U)
+#define CAN_RDL0R_DATA3_Msk    (0xFFUL << CAN_RDL0R_DATA3_Pos)                 /*!< 0xFF000000 */
+#define CAN_RDL0R_DATA3        CAN_RDL0R_DATA3_Msk                             /*!<Data byte 3 */
+
+/*******************  Bit definition for CAN_RDH0R register  ******************/
+#define CAN_RDH0R_DATA4_Pos    (0U)
+#define CAN_RDH0R_DATA4_Msk    (0xFFUL << CAN_RDH0R_DATA4_Pos)                 /*!< 0x000000FF */
+#define CAN_RDH0R_DATA4        CAN_RDH0R_DATA4_Msk                             /*!<Data byte 4 */
+#define CAN_RDH0R_DATA5_Pos    (8U)
+#define CAN_RDH0R_DATA5_Msk    (0xFFUL << CAN_RDH0R_DATA5_Pos)                 /*!< 0x0000FF00 */
+#define CAN_RDH0R_DATA5        CAN_RDH0R_DATA5_Msk                             /*!<Data byte 5 */
+#define CAN_RDH0R_DATA6_Pos    (16U)
+#define CAN_RDH0R_DATA6_Msk    (0xFFUL << CAN_RDH0R_DATA6_Pos)                 /*!< 0x00FF0000 */
+#define CAN_RDH0R_DATA6        CAN_RDH0R_DATA6_Msk                             /*!<Data byte 6 */
+#define CAN_RDH0R_DATA7_Pos    (24U)
+#define CAN_RDH0R_DATA7_Msk    (0xFFUL << CAN_RDH0R_DATA7_Pos)                 /*!< 0xFF000000 */
+#define CAN_RDH0R_DATA7        CAN_RDH0R_DATA7_Msk                             /*!<Data byte 7 */
+
+/*******************  Bit definition for CAN_RF0R register  *******************/
+#define CAN_RF0R_FMP0_Pos      (0U)
+#define CAN_RF0R_FMP0_Msk      (0x3UL << CAN_RF0R_FMP0_Pos)                    /*!< 0x00000003 */
+#define CAN_RF0R_FMP0          CAN_RF0R_FMP0_Msk                               /*!<FIFO 0 Message Pending */
+#define CAN_RF0R_FULL0_Pos     (3U)
+#define CAN_RF0R_FULL0_Msk     (0x1UL << CAN_RF0R_FULL0_Pos)                   /*!< 0x00000008 */
+#define CAN_RF0R_FULL0         CAN_RF0R_FULL0_Msk                              /*!<FIFO 0 Full */
+#define CAN_RF0R_FOVR0_Pos     (4U)
+#define CAN_RF0R_FOVR0_Msk     (0x1UL << CAN_RF0R_FOVR0_Pos)                   /*!< 0x00000010 */
+#define CAN_RF0R_FOVR0         CAN_RF0R_FOVR0_Msk                              /*!<FIFO 0 Overrun */
+#define CAN_RF0R_RFOM0_Pos     (5U)
+#define CAN_RF0R_RFOM0_Msk     (0x1UL << CAN_RF0R_RFOM0_Pos)                   /*!< 0x00000020 */
+#define CAN_RF0R_RFOM0         CAN_RF0R_RFOM0_Msk                              /*!<Release FIFO 0 Output Mailbox *
+
 /******************  Bit definition for CAN_TI0R register  ********************/
 #define CAN_TI0R_TXRQ          (0u)                               /*!<Transmit Mailbox Request */
 #define CAN_TI0R_RTR           (1u)                                /*!<Remote Transmission Request */

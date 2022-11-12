@@ -74,12 +74,44 @@ void CANBus::begin()
 
     // #todo: initialize the filters
 
+    init_filter();
+
     // Request initialization after all configuration is finished
     CLEAR_BIT(hcan->MCR, CAN_MCR_INRQ);
     // Wait until hardware is ready
     while (READ_BIT(hcan->MSR, CAN_MSR_INAK) == 0)
     {
     } 
+}
+
+void CANBus::init_filter()
+{
+    // enter init mode on the filter
+    SET_BIT(hcan->FMR, 0);
+
+    uint32_t filter_bank = 0;
+    uint32_t filter_bank_pos = 0;
+    
+    // deactivate the first filter bank
+    CLEAR_BIT(hcan->FA1R, filter_bank_pos);
+
+    // set 32 bit scale
+    SET_BIT(hcan->FS1R, filter_bank_pos);
+    
+    hcan->sFilterRegister[filter_bank].FR1 = 0x00000000;
+    hcan->sFilterRegister[filter_bank].FR2 = 0x00000000;
+
+    // 0 -> id mode mask
+    // 1 -> id mode list
+    CLEAR_BIT(hcan->FM1R, filter_bank_pos);
+
+    // assign everything to fifo 0
+    CLEAR_BIT(hcan->FFA1R, filter_bank_pos);
+
+    // activate the filter
+    SET_BIT(hcan->FA1R, filter_bank_pos);
+
+    CLEAR_BIT(hcan->FMR, 0);
 }
 
 uint32_t CANBus::getAvailableForWrite()
@@ -133,6 +165,50 @@ void CANBus::write(uint16_t message_id, const uint8_t data[], uint32_t size)
     {
         // Fail tramission, we have no free mailboxes
     }
+}
+
+uint32_t CANBus::getAvailableForRead(uint32_t rx_fifo)
+{
+    uint32_t fill_level = 0;
+    if (rx_fifo == 0)
+    {
+        fill_level = hcan->RF0R & 0xb11;
+    }
+    else
+    {
+        fill_level = hcan->RF1R & 0xb11;
+    }
+    return fill_level;
+}
+
+uint32_t CANBus::read(uint8_t data_out[], uint32_t size, uint32_t rx_fifo)
+{
+    if (getAvailableForRead(rx_fifo) == 0)
+    {
+        return -1;
+    }
+    
+    data_out[0] = (uint8_t)((CAN_RDL0R_DATA0 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA0_Pos);
+    data_out[1] = (uint8_t)((CAN_RDL0R_DATA1 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA1_Pos);
+    data_out[2] = (uint8_t)((CAN_RDL0R_DATA2 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA2_Pos);
+    data_out[3] = (uint8_t)((CAN_RDL0R_DATA3 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA3_Pos);
+    data_out[4] = (uint8_t)((CAN_RDH0R_DATA4 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA4_Pos);
+    data_out[5] = (uint8_t)((CAN_RDH0R_DATA5 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA5_Pos);
+    data_out[6] = (uint8_t)((CAN_RDH0R_DATA6 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA6_Pos);
+    data_out[7] = (uint8_t)((CAN_RDH0R_DATA7 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA7_Pos);
+
+    uint32_t std_id = CAN_RI0R_STID & hcan->sFIFOMailBox[rx_fifo].RIR >> CAN_RI0R_STID_Pos;
+
+    if (rx_fifo == 0)
+    {
+        SET_BIT(hcan->RF0R, CAN_RF0R_RFOM0_Pos);
+    }
+    else
+    {
+        SET_BIT(hcan->RF0R, CAN_RF0R_RFOM0_Pos);
+    }
+
+    return std_id;
 }
 
 #endif // STM32
