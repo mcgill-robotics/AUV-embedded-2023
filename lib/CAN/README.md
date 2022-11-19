@@ -11,14 +11,12 @@ void setup(){
     // Filter which places all messages with ids { 0xde, 0xad, 0xbe, 0xef } into fifo 0.
     CANBus::init_filter(0, 0, { 
         .type = CANBus::FilterType::IDList, 
-        .scale = CANBus::FilterScale::FS16,
-        .filters_16 = { 0xde, 0xad, 0xbe, 0xef }});
+        .filters = { 0xde, 0xad, 0xbe, 0xef }});
 
     // Filter which places all messages with ids { 0xfa, 0xce, 0xfe, 0xed } into fifo 1.
     CANBus::init_filter(1, 1, { 
         .type = CANBus::FilterType::IDList, 
-        .scale = CANBus::FilterScale::FS16,
-        .filters_16 = { 0xfa, 0xce, 0xfe, 0xed }});
+        .filters = { 0xfa, 0xce, 0xfe, 0xed }});
 
     CANBus::start();
 }

@@ -32,31 +32,24 @@ public:
         IDList = 1,
     };
 
-    enum class FilterScale
-    {
-        FS16,
-        FS32,
-    };
-
-
-    struct FilterInitParams
+    struct FilterInitConfig
     {
     public:
+        /** 
+         * Type of filter, either a list of 4 specific message identifiers or a set of bit masks. 
+         * When in mask mode, a mask of 0 will allow all messages through and a mask of 0xFFFF will block everything.
+         */
         FilterType type;
-        FilterScale scale;
 
-        union
-        {
-            uint16_t filters_16[4];
-            uint32_t filters_32[2];
-        };
+        uint16_t filters[4];
     };
 
     /**
      * @param bank_number, specifies the filter bank to initialize [0, 13].
      * @param fifo_number, specifies to which fifo the filter will be assigned [0, 1].
+     * @param params, filter config. see `FilterInitConfig`
     */
-    static Status init_filter(uint16_t bank_number, uint16_t fifo_number, const FilterInitParams& params);
+    static Status init_filter(uint16_t bank_number, uint16_t fifo_number, const FilterInitConfig& config);
 
     /**
      * Call start after calling begin and setting up any required filters.
@@ -96,6 +89,10 @@ public:
      * @returns Okay if a message was read out
      */
     static Status read(Message& message_out, uint32_t rx_fifo = 0);
+
+    typedef void (*MessageReceivedCallbackType)(uint32_t fifo);
+
+    static void register_msg_received_callback(MessageReceivedCallbackType callback);
 private:
     enum State
     {

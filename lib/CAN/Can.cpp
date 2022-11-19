@@ -26,6 +26,9 @@ static RCC_Registers* rcc = (RCC_Registers*)0x40021000UL;
 
 CANBus::State CANBus::state = CANBus::State::None;
 
+// ************* CAN callback function pointers  ***********************
+static CANBus::MessageReceivedCallbackType message_received_callback = nullptr;
+
 Status CANBus::init(GPIOMode gpio_mode, bool use_default_filter)
 {
     if (state != CANBus::State::None)
@@ -122,7 +125,7 @@ Status CANBus::init(GPIOMode gpio_mode, bool use_default_filter)
 
     if (use_default_filter)
     {
-        if (init_filter(0, 0, FilterInitParams{ FilterType::IDMask, FilterScale::FS32, { 0, 0 } }) != Status::Okay)
+        if (init_filter(0, 0, FilterInitConfig{ FilterType::IDMask, { 0, 0, 0, 0 } }) != Status::Okay)
         {
             error("Failed to init default filter");
         }
@@ -131,7 +134,7 @@ Status CANBus::init(GPIOMode gpio_mode, bool use_default_filter)
     okay();
 }
 
-Status CANBus::init_filter(uint16_t bank_number, uint16_t fifo_number, const FilterInitParams& params)
+Status CANBus::init_filter(uint16_t bank_number, uint16_t fifo_number, const FilterInitConfig& config)
 {
     if (state != CANBus::State::Initialized)
     {
@@ -157,22 +160,15 @@ Status CANBus::init_filter(uint16_t bank_number, uint16_t fifo_number, const Fil
     // deactivate the filter bank
     CLEAR_BIT(hcan->FA1R, bank_number_pos);
 
-    // set bit scale
-    if (params.scale == FilterScale::FS16)
-    {
-        CLEAR_BIT(hcan->FS1R, bank_number_pos);
-    }
-    else
-    {
-        SET_BIT(hcan->FS1R, bank_number_pos);
-    }
-    
-    hcan->sFilterRegister[bank_number].FR1 = params.filters_32[0];
-    hcan->sFilterRegister[bank_number].FR2 = params.filters_32[1];
+    // set bit scale. We only support 11 bit (standard) ids so only support 16 bit filters.
+    CLEAR_BIT(hcan->FS1R, bank_number_pos);
+
+    hcan->sFilterRegister[bank_number].FR1 = ((uint32_t)config.filters[1] << 16) | ((uint32_t)config.filters[0]);
+    hcan->sFilterRegister[bank_number].FR2 = ((uint32_t)config.filters[3] << 16) | ((uint32_t)config.filters[2]);
 
     // 0 -> id mode mask
     // 1 -> id mode list
-    CLEAR_BIT(hcan->FM1R, (uint32_t)params.type);
+    CLEAR_BIT(hcan->FM1R, (uint32_t)config.type);
 
     // assign everything to fifo 0
     CLEAR_BIT(hcan->FFA1R, bank_number_pos);
@@ -347,6 +343,11 @@ Status CANBus::read(Message& message_out, uint32_t rx_fifo)
     }
 
     okay();
+}
+
+void CANBus::register_msg_received_callback(MessageReceivedCallbackType callback)
+{
+    message_received_callback = callback;
 }
 
 #endif // STM32
