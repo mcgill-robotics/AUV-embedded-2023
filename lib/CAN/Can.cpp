@@ -122,7 +122,6 @@ Status CANBus::init(GPIOMode gpio_mode, bool use_default_filter)
     CLEAR_BIT(hcan->MCR, CAN_MCR_TTCM);
 
     // Set the bit timing register
-    //hcan->BTR = (uint32_t)(3ul << 20) | (12ul << 16) | ((uint32_t)bit_rate << 0);
     const uint32_t prescaler = 16;
     hcan->BTR = (uint32_t)((1ul << 20) | (1ul << 16) | (prescaler - 1));
 
