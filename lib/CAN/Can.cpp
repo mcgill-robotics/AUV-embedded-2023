@@ -122,7 +122,7 @@ Status CANBus::init(GPIOMode gpio_mode, bool use_default_filter)
 
     if (use_default_filter)
     {
-        if (init_filter(0, 0, FilterInitParams{ FilterType::List, FilterScale::FS32, { 0, 0 } }) != Status::Okay)
+        if (init_filter(0, 0, FilterInitParams{ FilterType::IDMask, FilterScale::FS32, { 0, 0 } }) != Status::Okay)
         {
             error("Failed to init default filter");
         }

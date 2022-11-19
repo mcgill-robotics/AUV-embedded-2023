@@ -28,8 +28,8 @@ public:
 
     enum class FilterType
     {
-        Mask = 0,
-        List = 1,
+        IDMask = 0,
+        IDList = 1,
     };
 
     enum class FilterScale
