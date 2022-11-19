@@ -4,7 +4,20 @@
 #include "CanDefs.inl"
 #include "../Utils/BitUtils.h"
 
-#define error(m) // #todo
+#include <assert.h>
+
+#define warn(m) \
+    __asm__ __volatile__("BKPT"); \
+    return Status::Error
+
+#define error(m) \
+    __asm__ __volatile__("BKPT"); \
+    return Status::Error
+
+#define error_m(m) \
+    __asm__ __volatile__("BKPT");
+    
+#define okay() return Status::Okay
 
 static CAN_Registers* hcan = (CAN_Registers*)0x40006400UL;
 static GPIO_Registers* gpioa = (GPIO_Registers*)0x48000000UL;
@@ -13,13 +26,12 @@ static RCC_Registers* rcc = (RCC_Registers*)0x40021000UL;
 
 CANBus::State CANBus::state = CANBus::State::None;
 
-void CANBus::init(GPIOMode gpio_mode)
+Status CANBus::init(GPIOMode gpio_mode, bool use_default_filter)
 {
     if (state != CANBus::State::None)
     {
-        error("CANBus::begin called multiple times");
         state = CANBus::State::Error;
-        return;
+        error("CANBus::begin called multiple times");
     }
 
     // ***************** Initialize the clock for CAN and GPIO *****************
@@ -84,7 +96,6 @@ void CANBus::init(GPIOMode gpio_mode)
 
     // ***************** Initialize the CAN peripheral *****************
 
-
     SET_BIT(hcan->MCR, CAN_MCR_INRQ);
     // Wait until hardware is ready
     while (READ_BIT(hcan->MSR, CAN_MSR_INAK) == 0)
@@ -107,55 +118,79 @@ void CANBus::init(GPIOMode gpio_mode)
     const uint32_t prescaler = 16;
     hcan->BTR = (uint32_t)((1ul << 20) | (1ul << 16) | (prescaler - 1));
 
-    init_filter();
-
     state = CANBus::State::Initialized;
+
+    if (use_default_filter)
+    {
+        if (init_filter(0, 0, FilterInitParams{ FilterType::List, FilterScale::FS32, { 0, 0 } }) != Status::Okay)
+        {
+            error("Failed to init default filter");
+        }
+    }
+
+    okay();
 }
 
-void CANBus::init_filter()
+Status CANBus::init_filter(uint16_t bank_number, uint16_t fifo_number, const FilterInitParams& params)
 {
     if (state != CANBus::State::Initialized)
     {
-        error("CANBus::init_filter() must be called after begin() and before start().");
         state = CANBus::State::Error;
-        return;
+        error("CANBus::init_filter() must be called after begin() and before start().");
+    }
+
+    if (bank_number > 13)
+    {
+        error("Invalid filter bank number. Valid values are [0, 13]");
+    }
+
+    if (fifo_number > 1)
+    {
+        error("Invalid filter fifo number. Valid valeus are [0, 1]");
     }
 
     // enter init mode on the filter
     SET_BIT(hcan->FMR, 0);
 
-    uint32_t filter_bank = 0;
-    uint32_t filter_bank_pos = 0;
+    uint32_t bank_number_pos = 1 << (bank_number &0x1FU);
     
-    // deactivate the first filter bank
-    CLEAR_BIT(hcan->FA1R, filter_bank_pos);
+    // deactivate the filter bank
+    CLEAR_BIT(hcan->FA1R, bank_number_pos);
 
-    // set 32 bit scale
-    SET_BIT(hcan->FS1R, filter_bank_pos);
+    // set bit scale
+    if (params.scale == FilterScale::FS16)
+    {
+        CLEAR_BIT(hcan->FS1R, bank_number_pos);
+    }
+    else
+    {
+        SET_BIT(hcan->FS1R, bank_number_pos);
+    }
     
-    hcan->sFilterRegister[filter_bank].FR1 = 0x00000000;
-    hcan->sFilterRegister[filter_bank].FR2 = 0x00000000;
+    hcan->sFilterRegister[bank_number].FR1 = params.filters_32[0];
+    hcan->sFilterRegister[bank_number].FR2 = params.filters_32[1];
 
     // 0 -> id mode mask
     // 1 -> id mode list
-    CLEAR_BIT(hcan->FM1R, filter_bank_pos);
+    CLEAR_BIT(hcan->FM1R, (uint32_t)params.type);
 
     // assign everything to fifo 0
-    CLEAR_BIT(hcan->FFA1R, filter_bank_pos);
+    CLEAR_BIT(hcan->FFA1R, bank_number_pos);
 
     // activate the filter
-    SET_BIT(hcan->FA1R, filter_bank_pos);
+    SET_BIT(hcan->FA1R, bank_number_pos);
 
     CLEAR_BIT(hcan->FMR, 0);
+
+    okay();
 }
 
-void CANBus::start()
+Status CANBus::start()
 {
     if (state != CANBus::State::Initialized)
     {
-        error("CANBus has not been initialized.");
         state = CANBus::State::Error;
-        return;
+        error("CANBus has not been initialized.");
     }
 
     // Request initialization after all configuration is finished
@@ -166,14 +201,16 @@ void CANBus::start()
     }
 
     state = CANBus::State::Ready; 
+
+    okay();
 }
 
 uint32_t CANBus::getAvailableForWrite()
 {
     if (state != CANBus::State::Ready)
     {
-        error("CANBus has not been started.");
         state = CANBus::State::Error;
+        error_m("CANBus has not been started.");
         return 0;
     }
 
@@ -201,9 +238,8 @@ Status CANBus::write(uint16_t message_id, const uint8_t data[], uint32_t size)
 {
     if (state != CANBus::State::Ready)
     {
-        error("CANBus has not been started.");
         state = CANBus::State::Error;
-        return Status::Error;
+        error("CANBus has not been started.");
     }
 
     if (getAvailableForWrite() > 0)
@@ -232,12 +268,14 @@ Status CANBus::write(uint16_t message_id, const uint8_t data[], uint32_t size)
     }
     else
     {
-        // Fail tramission, we have no free mailboxes
-        return Status::Error;
+        // Fail transmission, we have no free mailboxes
+        warn("No free mailboxes");
     }
+
+    okay();
 }
 
-Status CANBus::write(Message& message)
+Status CANBus::write(const Message& message)
 {
    return write(message.id, message.data, message.size);
 }
@@ -247,8 +285,14 @@ uint32_t CANBus::getAvailableForRead(uint32_t rx_fifo)
 {
     if (state != CANBus::State::Ready)
     {
-        error("CANBus has not been started.");
         state = CANBus::State::Error;
+        error_m("CANBus has not been started.");
+        return 0;
+    }
+
+    if (rx_fifo > 1)
+    {
+        error_m("Invalid rx_fifo number. Valid values are [0, 1]");
         return 0;
     }
 
@@ -268,14 +312,18 @@ Status CANBus::read(Message& message_out, uint32_t rx_fifo)
 {
     if (state != CANBus::State::Ready)
     {
-        error("CANBus has not been started.");
         state = CANBus::State::Error;
-        return Status::Error;
+        error("CANBus has not been started.");
+    }
+
+    if (rx_fifo > 1)
+    {
+        error("Invalid rx_fifo number. Valid values are [0, 1]");
     }
 
     if (getAvailableForRead(rx_fifo) == 0)
     {
-        return Status::Error;
+        warn("No mailboxes with available messages");
     }
     
     message_out.data[0] = (uint8_t)((CAN_RDL0R_DATA0 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA0_Pos);
@@ -298,7 +346,7 @@ Status CANBus::read(Message& message_out, uint32_t rx_fifo)
         SET_BIT(hcan->RF0R, CAN_RF0R_RFOM0_Pos);
     }
 
-    return Status::Okay;
+    okay();
 }
 
 #endif // STM32

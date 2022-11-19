@@ -24,14 +24,44 @@ public:
     /**
      * Initializes the CAN bus peripheral.
      */
-    static void init(GPIOMode gpio_mode = GPIOMode::A11A12);
+    static Status init(GPIOMode gpio_mode = GPIOMode::A11A12, bool use_default_filter = true);
 
-    static void init_filter();
+    enum class FilterType
+    {
+        Mask = 0,
+        List = 1,
+    };
+
+    enum class FilterScale
+    {
+        FS16,
+        FS32,
+    };
+
+
+    struct FilterInitParams
+    {
+    public:
+        FilterType type;
+        FilterScale scale;
+
+        union
+        {
+            uint16_t filters_16[4];
+            uint32_t filters_32[2];
+        };
+    };
+
+    /**
+     * @param bank_number, specifies the filter bank to initialize [0, 13].
+     * @param fifo_number, specifies to which fifo the filter will be assigned [0, 1].
+    */
+    static Status init_filter(uint16_t bank_number, uint16_t fifo_number, const FilterInitParams& params);
 
     /**
      * Call start after calling begin and setting up any required filters.
      */
-    static void start();
+    static Status start();
     
     /**
      * @returns the number of available output mailboxes.
@@ -53,7 +83,7 @@ public:
      * @returns Okay if the message was successfully posted to a mailbox. If Error, must retry when `getAvailableForWrite()` returns > 0
      */
     static Status write(uint16_t message_id, const uint8_t data[], uint32_t size);
-    static Status write(Message& message);
+    static Status write(const Message& message);
     
     /**
      * @returns the number of messages available for reading.
