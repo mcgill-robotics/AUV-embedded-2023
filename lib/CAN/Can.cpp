@@ -4,13 +4,24 @@
 #include "CanDefs.inl"
 #include "../Utils/BitUtils.h"
 
+#define error(m) // #todo
+
 static CAN_Registers* hcan = (CAN_Registers*)0x40006400UL;
 static GPIO_Registers* gpioa = (GPIO_Registers*)0x48000000UL;
 static GPIO_Registers* gpiob = (GPIO_Registers*)0x48000400UL;
 static RCC_Registers* rcc = (RCC_Registers*)0x40021000UL;
 
-void CANBus::begin(GPIOMode gpio_mode)
+CANBus::State CANBus::state = CANBus::State::None;
+
+void CANBus::init(GPIOMode gpio_mode)
 {
+    if (state != CANBus::State::None)
+    {
+        error("CANBus::begin called multiple times");
+        state = CANBus::State::Error;
+        return;
+    }
+
     // ***************** Initialize the clock for CAN and GPIO *****************
     //
     // Enable GPIOA in the RCC (clock) peripheral control registers
@@ -96,19 +107,21 @@ void CANBus::begin(GPIOMode gpio_mode)
     const uint32_t prescaler = 16;
     hcan->BTR = (uint32_t)((1ul << 20) | (1ul << 16) | (prescaler - 1));
 
-    // #todo: initialize the filters
+    // #todo: initialize the default filters
     init_filter();
 
-    // Request initialization after all configuration is finished
-    CLEAR_BIT(hcan->MCR, CAN_MCR_INRQ);
-    // Wait until hardware is ready
-    while (READ_BIT(hcan->MSR, CAN_MSR_INAK) == 0)
-    {
-    } 
+    state = CANBus::State::Initialized;
 }
 
 void CANBus::init_filter()
 {
+    if (state != CANBus::State::Initialized)
+    {
+        error("CANBus::init_filter() must be called after begin() and before start().");
+        state = CANBus::State::Error;
+        return;
+    }
+
     // enter init mode on the filter
     SET_BIT(hcan->FMR, 0);
 
@@ -137,8 +150,34 @@ void CANBus::init_filter()
     CLEAR_BIT(hcan->FMR, 0);
 }
 
+void CANBus::start()
+{
+    if (state != CANBus::State::Initialized)
+    {
+        error("CANBus has not been initialized.");
+        state = CANBus::State::Error;
+        return;
+    }
+
+    // Request initialization after all configuration is finished
+    CLEAR_BIT(hcan->MCR, CAN_MCR_INRQ);
+    // Wait until hardware is ready
+    while (READ_BIT(hcan->MSR, CAN_MSR_INAK) == 0)
+    {
+    }
+
+    state = CANBus::State::Ready; 
+}
+
 uint32_t CANBus::getAvailableForWrite()
 {
+    if (state != CANBus::State::Ready)
+    {
+        error("CANBus has not been started.");
+        state = CANBus::State::Error;
+        return;
+    }
+
     uint32_t free_mailboxes = 0;
 
     if (READ_BIT(hcan->TSR, CAN_TSR_TME0) != 0)
@@ -159,8 +198,15 @@ uint32_t CANBus::getAvailableForWrite()
     return free_mailboxes;
 }
 
-void CANBus::write(uint16_t message_id, const uint8_t data[], uint32_t size)
+Status CANBus::write(uint16_t message_id, const uint8_t data[], uint32_t size)
 {
+    if (state != CANBus::State::Ready)
+    {
+        error("CANBus has not been started.");
+        state = CANBus::State::Error;
+        return Status::Error;
+    }
+
     if (getAvailableForWrite() > 0)
     {
         // mask for the first open transmission mailbox
@@ -183,15 +229,30 @@ void CANBus::write(uint16_t message_id, const uint8_t data[], uint32_t size)
             (uint32_t)((uint32_t)data[0] << CAN_TDL0R_DATA0_Pos);
 
         SET_BIT(hcan->sTxMailBox[transmit_mailbox].TIR, CAN_TI0R_TXRQ);
+        return Status::Error;
     }
     else
     {
         // Fail tramission, we have no free mailboxes
+        return Status::Error;
     }
 }
 
+Status CANBus::write(Message& message)
+{
+   return write(message.id, message.data, message.size);
+}
+    
+
 uint32_t CANBus::getAvailableForRead(uint32_t rx_fifo)
 {
+    if (state != CANBus::State::Ready)
+    {
+        error("CANBus has not been started.");
+        state = CANBus::State::Error;
+        return 0;
+    }
+
     uint32_t fill_level = 0;
     if (rx_fifo == 0)
     {
@@ -204,23 +265,30 @@ uint32_t CANBus::getAvailableForRead(uint32_t rx_fifo)
     return fill_level;
 }
 
-uint32_t CANBus::read(uint8_t data_out[], uint32_t size, uint32_t rx_fifo)
+Status CANBus::read(Message& message_out, uint32_t rx_fifo)
 {
+    if (state != CANBus::State::Ready)
+    {
+        error("CANBus has not been started.");
+        state = CANBus::State::Error;
+        return Status::Error;
+    }
+
     if (getAvailableForRead(rx_fifo) == 0)
     {
-        return -1;
+        return Status::Error;
     }
     
-    data_out[0] = (uint8_t)((CAN_RDL0R_DATA0 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA0_Pos);
-    data_out[1] = (uint8_t)((CAN_RDL0R_DATA1 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA1_Pos);
-    data_out[2] = (uint8_t)((CAN_RDL0R_DATA2 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA2_Pos);
-    data_out[3] = (uint8_t)((CAN_RDL0R_DATA3 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA3_Pos);
-    data_out[4] = (uint8_t)((CAN_RDH0R_DATA4 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA4_Pos);
-    data_out[5] = (uint8_t)((CAN_RDH0R_DATA5 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA5_Pos);
-    data_out[6] = (uint8_t)((CAN_RDH0R_DATA6 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA6_Pos);
-    data_out[7] = (uint8_t)((CAN_RDH0R_DATA7 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA7_Pos);
+    message_out.data[0] = (uint8_t)((CAN_RDL0R_DATA0 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA0_Pos);
+    message_out.data[1] = (uint8_t)((CAN_RDL0R_DATA1 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA1_Pos);
+    message_out.data[2] = (uint8_t)((CAN_RDL0R_DATA2 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA2_Pos);
+    message_out.data[3] = (uint8_t)((CAN_RDL0R_DATA3 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA3_Pos);
+    message_out.data[4] = (uint8_t)((CAN_RDH0R_DATA4 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA4_Pos);
+    message_out.data[5] = (uint8_t)((CAN_RDH0R_DATA5 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA5_Pos);
+    message_out.data[6] = (uint8_t)((CAN_RDH0R_DATA6 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA6_Pos);
+    message_out.data[7] = (uint8_t)((CAN_RDH0R_DATA7 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA7_Pos);
 
-    uint32_t std_id = CAN_RI0R_STID & hcan->sFIFOMailBox[rx_fifo].RIR >> CAN_RI0R_STID_Pos;
+    message_out.id = CAN_RI0R_STID & hcan->sFIFOMailBox[rx_fifo].RIR >> CAN_RI0R_STID_Pos;
 
     if (rx_fifo == 0)
     {
@@ -231,7 +299,7 @@ uint32_t CANBus::read(uint8_t data_out[], uint32_t size, uint32_t rx_fifo)
         SET_BIT(hcan->RF0R, CAN_RF0R_RFOM0_Pos);
     }
 
-    return std_id;
+    return Status::Okay;
 }
 
 #endif // STM32
