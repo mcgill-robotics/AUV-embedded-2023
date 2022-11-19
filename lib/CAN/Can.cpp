@@ -107,7 +107,6 @@ void CANBus::init(GPIOMode gpio_mode)
     const uint32_t prescaler = 16;
     hcan->BTR = (uint32_t)((1ul << 20) | (1ul << 16) | (prescaler - 1));
 
-    // #todo: initialize the default filters
     init_filter();
 
     state = CANBus::State::Initialized;
@@ -175,7 +174,7 @@ uint32_t CANBus::getAvailableForWrite()
     {
         error("CANBus has not been started.");
         state = CANBus::State::Error;
-        return;
+        return 0;
     }
 
     uint32_t free_mailboxes = 0;
