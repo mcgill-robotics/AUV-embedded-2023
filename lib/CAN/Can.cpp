@@ -70,6 +70,11 @@ Status CANBus::init(GPIOMode gpio_mode, bool use_default_filter)
         tx_pin = GPIO_PIN_9;
     }
 
+    if (gpio == nullptr)
+    {
+        error("selected gpio mode is invalid");
+    }
+
     uint32_t temp = 0;
     temp = gpio->OSPEEDR;
     // clear the bits before setting them
@@ -155,7 +160,7 @@ Status CANBus::init_filter(uint16_t bank_number, uint16_t fifo_number, const Fil
     // enter init mode on the filter
     SET_BIT(hcan->FMR, 0);
 
-    uint32_t bank_number_pos = 1 << (bank_number &0x1FU);
+    const uint32_t bank_number_pos = 1 << (bank_number &0x1FU);
     
     // deactivate the filter bank
     CLEAR_BIT(hcan->FA1R, bank_number_pos);
@@ -168,7 +173,14 @@ Status CANBus::init_filter(uint16_t bank_number, uint16_t fifo_number, const Fil
 
     // 0 -> id mode mask
     // 1 -> id mode list
-    CLEAR_BIT(hcan->FM1R, (uint32_t)config.type);
+    if (config.type == FilterType::IDMask)
+    {
+        CLEAR_BIT(hcan->FM1R, bank_number_pos);
+    }
+    else if (config.type == FilterType::IDList)
+    {
+        SET_BIT(hcan->FM1R, bank_number_pos);
+    }
 
     // assign everything to fifo 0
     CLEAR_BIT(hcan->FFA1R, bank_number_pos);
@@ -241,7 +253,7 @@ Status CANBus::write(uint16_t message_id, const uint8_t data[], uint32_t size)
     if (getAvailableForWrite() > 0)
     {
         // mask for the first open transmission mailbox
-        uint32_t transmit_mailbox = (hcan->TSR & (0b11ul << CAN_TSR_CODE)) >> 24;
+        const uint32_t transmit_mailbox = (hcan->TSR & (0b11ul << CAN_TSR_CODE)) >> 24;
 
         // #todo: std id, frame type
         hcan->sTxMailBox[transmit_mailbox].TIR = (message_id << CAN_TI0R_STID) | CAN_RTR_DATA;
