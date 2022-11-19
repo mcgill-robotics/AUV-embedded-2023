@@ -254,7 +254,6 @@ Status CANBus::write(uint16_t message_id, const uint8_t data[], uint32_t size)
         // mask for the first open transmission mailbox
         const uint32_t transmit_mailbox = (hcan->TSR & (0b11ul << CAN_TSR_CODE)) >> 24;
 
-        // #todo: std id, frame type
         hcan->sTxMailBox[transmit_mailbox].TIR = (message_id << CAN_TI0R_STID) | CAN_RTR_DATA;
         hcan->sTxMailBox[transmit_mailbox].TDTR = 8; // always only transmit 8 bytes for simplicity
         // #todo: set TDTR time bit?
