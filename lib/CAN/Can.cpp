@@ -6,46 +6,70 @@
 
 static CAN_Registers* hcan = (CAN_Registers*)0x40006400UL;
 static GPIO_Registers* gpioa = (GPIO_Registers*)0x48000000UL;
+static GPIO_Registers* gpiob = (GPIO_Registers*)0x48000400UL;
 static RCC_Registers* rcc = (RCC_Registers*)0x40021000UL;
 
-void CANBus::begin()
+void CANBus::begin(GPIOMode gpio_mode)
 {
     // ***************** Initialize the clock for CAN and GPIO *****************
     //
     // Enable GPIOA in the RCC (clock) peripheral control registers
-    SET_BIT(rcc->AHB2ENR, 0);
+    if (gpio_mode == GPIOMode::A11A12)
+    {
+        SET_BIT(rcc->AHB2ENR, 0);
+    }
+    else if (gpio_mode == GPIOMode::B8B9)
+    {
+        SET_BIT(rcc->AHB2ENR, 1);
+    }
 
     // Enable CAN1 in the RCC (clock) peripheral control registers
     SET_BIT(rcc->APB1ENR1, 25);
 
     // ***************** Initialize the GPIO for CAN bus *****************
 
+    GPIO_Registers* gpio = nullptr;
+    uint32_t tx_pin = -1;
+    uint32_t rx_pin = -1;
+    if (gpio_mode == GPIOMode::A11A12)
+    {
+        gpio = gpioa;
+        rx_pin = GPIO_PIN_11;
+        tx_pin = GPIO_PIN_12;
+    }
+    else if (gpio_mode == GPIOMode::B8B9)
+    {
+        gpio = gpiob;
+        rx_pin = GPIO_PIN_8;
+        tx_pin = GPIO_PIN_9;
+    }
+
     uint32_t temp = 0;
-    temp = gpioa->OSPEEDR;
+    temp = gpio->OSPEEDR;
     // clear the bits before setting them
-    temp &= ~((3ul << GPIO_PIN_11 * 2) | (3ul << GPIO_PIN_12 * 2));
-    temp |= (GPIO_SPEED_FREQ_VERY_HIGH << GPIO_PIN_11 * 2) | (GPIO_SPEED_FREQ_VERY_HIGH << GPIO_PIN_12 * 2);
-    gpioa->OSPEEDR = temp;
+    temp &= ~((3ul << rx_pin * 2) | (3ul << tx_pin * 2));
+    temp |= (GPIO_SPEED_FREQ_VERY_HIGH << rx_pin * 2) | (GPIO_SPEED_FREQ_VERY_HIGH << tx_pin * 2);
+    gpio->OSPEEDR = temp;
 
-    temp = gpioa->OTYPER;
-    temp &= ~((1ul << GPIO_PIN_11) | (1ul << GPIO_PIN_11));
-    temp |= (OUTPUT_PP << GPIO_PIN_11) | (OUTPUT_PP << GPIO_PIN_12);
-    gpioa->OTYPER = temp; 
+    temp = gpio->OTYPER;
+    temp &= ~((1ul << rx_pin) | (1ul << tx_pin));
+    temp |= (OUTPUT_PP << rx_pin) | (OUTPUT_PP << tx_pin);
+    gpio->OTYPER = temp; 
 
-    temp = gpioa->PUPDR;
-    temp &= ~((3ul << GPIO_PIN_11 * 2) | (3ul << GPIO_PIN_12 * 2));
-    temp |= (GPIO_NOPULL << GPIO_PIN_11 * 2) | (GPIO_NOPULL << GPIO_PIN_12 * 2);
-    gpioa->PUPDR = temp;
+    temp = gpio->PUPDR;
+    temp &= ~((3ul << rx_pin * 2) | (3ul << tx_pin * 2));
+    temp |= (GPIO_NOPULL << rx_pin * 2) | (GPIO_NOPULL << tx_pin * 2);
+    gpio->PUPDR = temp;
 
-    temp = gpioa->AFR[1];
-    temp &= ~((0b1111ul << ((GPIO_PIN_11 & 0x07u) * 4u)) | (0b1111ul << ((GPIO_PIN_12 & 0x07u) * 4u)));
-    temp |= (GPIO_AF9_CAN1 << ((GPIO_PIN_11 & 0x07u) * 4u)) | (GPIO_AF9_CAN1 << ((GPIO_PIN_12 & 0x07u) * 4u));
-    gpioa->AFR[1] = temp;
+    temp = gpio->AFR[1];
+    temp &= ~((0b1111ul << ((rx_pin & 0x07u) * 4u)) | (0b1111ul << ((tx_pin & 0x07u) * 4u)));
+    temp |= (GPIO_AF9_CAN1 << ((rx_pin & 0x07u) * 4u)) | (GPIO_AF9_CAN1 << ((tx_pin & 0x07u) * 4u));
+    gpio->AFR[1] = temp;
 
-    temp = gpioa->MODER;
-    temp &= ~((3ul << GPIO_PIN_11 * 2) | (3ul << GPIO_PIN_12 * 2));
-    temp |= (MODE_AF << GPIO_PIN_11 * 2) | (MODE_AF << GPIO_PIN_12 * 2);
-    gpioa->MODER = temp;
+    temp = gpio->MODER;
+    temp &= ~((3ul << rx_pin * 2) | (3ul << tx_pin * 2));
+    temp |= (MODE_AF << rx_pin * 2) | (MODE_AF << tx_pin * 2);
+    gpio->MODER = temp;
 
     // ***************** Initialize the CAN peripheral *****************
 
@@ -73,7 +97,6 @@ void CANBus::begin()
     hcan->BTR = (uint32_t)((1ul << 20) | (1ul << 16) | (prescaler - 1));
 
     // #todo: initialize the filters
-
     init_filter();
 
     // Request initialization after all configuration is finished

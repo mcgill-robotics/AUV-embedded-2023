@@ -8,10 +8,16 @@
 class CANBus
 {
 public:
+    enum class GPIOMode
+    {
+        A11A12,
+        B8B9,
+    };
+
     /**
      * Initializes the CAN bus peripheral.
      */
-    static void begin();
+    static void begin(GPIOMode gpio_mode = GPIOMode::A11A12);
     
     /**
      * @returns the number of available output mailboxes.
