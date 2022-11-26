@@ -25,7 +25,7 @@ void setup() {
 void loop() {
 #if defined(POWER)
     power_loop(); // Call POWER loop function
-#elif defined(PROPERLLER)
+#elif defined(PROPELLER)
     propeller_loop(); // Call PROPELLER loop function
 #elif defined(GRABBER)
     grabber_loop(); // Call GRABBER loop function
@@ -35,5 +35,7 @@ void loop() {
     torpedo_loop(); // Call TORPEDO loop function
 #elif defined(HYDROPHONE)
     hydrophone_loop(); // Call HYDROPHONE loop function
+#elif
+#error System has no loop function defined!
 #endif
 }
