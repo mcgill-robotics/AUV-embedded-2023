@@ -255,7 +255,7 @@ Status CANBus::write(const Message& message)
         const uint32_t transmit_mailbox = (hcan->TSR & (0b11ul << CAN_TSR_CODE)) >> 24;
 
         hcan->sTxMailBox[transmit_mailbox].TIR = (message.id << CAN_TI0R_STID) | CAN_RTR_DATA;
-        hcan->sTxMailBox[transmit_mailbox].TDTR = message.size; // always only transmit 8 bytes for simplicity
+        hcan->sTxMailBox[transmit_mailbox].TDTR = message.size;
         // #todo: set TDTR time bit?
 
         hcan->sTxMailBox[transmit_mailbox].TDHR =
