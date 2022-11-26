@@ -241,7 +241,7 @@ uint32_t CANBus::getAvailableForWrite()
     return free_mailboxes;
 }
 
-Status CANBus::write(uint16_t message_id, const uint8_t data[], uint32_t size)
+Status CANBus::write(const Message& message)
 {
     if (state != CANBus::State::Ready)
     {
@@ -254,20 +254,20 @@ Status CANBus::write(uint16_t message_id, const uint8_t data[], uint32_t size)
         // mask for the first open transmission mailbox
         const uint32_t transmit_mailbox = (hcan->TSR & (0b11ul << CAN_TSR_CODE)) >> 24;
 
-        hcan->sTxMailBox[transmit_mailbox].TIR = (message_id << CAN_TI0R_STID) | CAN_RTR_DATA;
-        hcan->sTxMailBox[transmit_mailbox].TDTR = 8; // always only transmit 8 bytes for simplicity
+        hcan->sTxMailBox[transmit_mailbox].TIR = (message.id << CAN_TI0R_STID) | CAN_RTR_DATA;
+        hcan->sTxMailBox[transmit_mailbox].TDTR = message.size; // always only transmit 8 bytes for simplicity
         // #todo: set TDTR time bit?
 
         hcan->sTxMailBox[transmit_mailbox].TDHR =
-            (uint32_t)((uint32_t)data[7] << CAN_TDH0R_DATA7_Pos) |
-            (uint32_t)((uint32_t)data[6] << CAN_TDH0R_DATA6_Pos) |
-            (uint32_t)((uint32_t)data[5] << CAN_TDH0R_DATA5_Pos) |
-            (uint32_t)((uint32_t)data[4] << CAN_TDH0R_DATA4_Pos);
+            (uint32_t)((uint32_t)message.data_8[7] << CAN_TDH0R_DATA7_Pos) |
+            (uint32_t)((uint32_t)message.data_8[6] << CAN_TDH0R_DATA6_Pos) |
+            (uint32_t)((uint32_t)message.data_8[5] << CAN_TDH0R_DATA5_Pos) |
+            (uint32_t)((uint32_t)message.data_8[4] << CAN_TDH0R_DATA4_Pos);
         hcan->sTxMailBox[transmit_mailbox].TDLR =
-            (uint32_t)((uint32_t)data[3] << CAN_TDL0R_DATA3_Pos) |
-            (uint32_t)((uint32_t)data[2] << CAN_TDL0R_DATA2_Pos) |
-            (uint32_t)((uint32_t)data[1] << CAN_TDL0R_DATA1_Pos) |
-            (uint32_t)((uint32_t)data[0] << CAN_TDL0R_DATA0_Pos);
+            (uint32_t)((uint32_t)message.data_8[3] << CAN_TDL0R_DATA3_Pos) |
+            (uint32_t)((uint32_t)message.data_8[2] << CAN_TDL0R_DATA2_Pos) |
+            (uint32_t)((uint32_t)message.data_8[1] << CAN_TDL0R_DATA1_Pos) |
+            (uint32_t)((uint32_t)message.data_8[0] << CAN_TDL0R_DATA0_Pos);
 
         SET_BIT(hcan->sTxMailBox[transmit_mailbox].TIR, CAN_TI0R_TXRQ);
         return Status::Error;
@@ -280,12 +280,6 @@ Status CANBus::write(uint16_t message_id, const uint8_t data[], uint32_t size)
 
     okay();
 }
-
-Status CANBus::write(const Message& message)
-{
-   return write(message.id, message.data, message.size);
-}
-    
 
 uint32_t CANBus::getAvailableForRead(uint32_t rx_fifo)
 {
@@ -332,14 +326,14 @@ Status CANBus::read(Message& message_out, uint32_t rx_fifo)
         warn("No mailboxes with available messages");
     }
     
-    message_out.data[0] = (uint8_t)((CAN_RDL0R_DATA0 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA0_Pos);
-    message_out.data[1] = (uint8_t)((CAN_RDL0R_DATA1 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA1_Pos);
-    message_out.data[2] = (uint8_t)((CAN_RDL0R_DATA2 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA2_Pos);
-    message_out.data[3] = (uint8_t)((CAN_RDL0R_DATA3 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA3_Pos);
-    message_out.data[4] = (uint8_t)((CAN_RDH0R_DATA4 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA4_Pos);
-    message_out.data[5] = (uint8_t)((CAN_RDH0R_DATA5 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA5_Pos);
-    message_out.data[6] = (uint8_t)((CAN_RDH0R_DATA6 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA6_Pos);
-    message_out.data[7] = (uint8_t)((CAN_RDH0R_DATA7 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA7_Pos);
+    message_out.data_8[0] = (uint8_t)((CAN_RDL0R_DATA0 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA0_Pos);
+    message_out.data_8[1] = (uint8_t)((CAN_RDL0R_DATA1 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA1_Pos);
+    message_out.data_8[2] = (uint8_t)((CAN_RDL0R_DATA2 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA2_Pos);
+    message_out.data_8[3] = (uint8_t)((CAN_RDL0R_DATA3 & hcan->sFIFOMailBox[rx_fifo].RDLR) >> CAN_RDL0R_DATA3_Pos);
+    message_out.data_8[4] = (uint8_t)((CAN_RDH0R_DATA4 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA4_Pos);
+    message_out.data_8[5] = (uint8_t)((CAN_RDH0R_DATA5 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA5_Pos);
+    message_out.data_8[6] = (uint8_t)((CAN_RDH0R_DATA6 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA6_Pos);
+    message_out.data_8[7] = (uint8_t)((CAN_RDH0R_DATA7 & hcan->sFIFOMailBox[rx_fifo].RDHR) >> CAN_RDH0R_DATA7_Pos);
 
     message_out.id = CAN_RI0R_STID & hcan->sFIFOMailBox[rx_fifo].RIR >> CAN_RI0R_STID_Pos;
 

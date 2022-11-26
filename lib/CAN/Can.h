@@ -66,7 +66,14 @@ public:
     public:
         uint32_t id = 0;
         uint32_t size = 0;
-        uint8_t data[8] = {0};
+        
+        union
+        {
+            uint64_t data_64;
+            uint32_t data_32[2];
+            uint16_t data_16[4];
+            uint8_t data_8[8];
+        };
     };
 
     /**
@@ -75,7 +82,6 @@ public:
      * @param size number of bytes to write.
      * @returns Okay if the message was successfully posted to a mailbox. If Error, must retry when `getAvailableForWrite()` returns > 0
      */
-    static Status write(uint16_t message_id, const uint8_t data[], uint32_t size);
     static Status write(const Message& message);
     
     /**
@@ -94,6 +100,7 @@ public:
 
     static void register_msg_received_callback(MessageReceivedCallbackType callback);
 private:
+
     enum State
     {
         None,

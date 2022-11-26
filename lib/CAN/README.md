@@ -39,6 +39,13 @@ void loop(){
         // do something with the message...
         // ...
     }
+   
+   // checks if there are spaces available to transmit
+   if (CANBus::getAvailableForWrite() > 0)
+   {
+       CANBus::write({.id  = 0xde, .size = 8, .data_32 = {1, 2}});
+   }
+
 
     delay(100);
 }
