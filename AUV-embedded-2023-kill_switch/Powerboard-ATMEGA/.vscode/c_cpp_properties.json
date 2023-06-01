@@ -1,0 +1,62 @@
+//
+// !!! WARNING !!! AUTO-GENERATED FILE!
+// PLEASE DO NOT MODIFY IT AND USE "platformio.ini":
+// https://docs.platformio.org/page/projectconf/section_env_build.html#build-flags
+//
+{
+    "configurations": [
+        {
+            "name": "PlatformIO",
+            "includePath": [
+                "/home/felix/git/AUV-embedded-2023/Powerboard-ATMEGA/include",
+                "/home/felix/git/AUV-embedded-2023/Powerboard-ATMEGA/src",
+                "/home/felix/.platformio/packages/framework-arduino-avr-minicore/cores/MiniCore",
+                "/home/felix/.platformio/packages/framework-arduino-avr-minicore/variants/standard",
+                "/home/felix/.platformio/packages/framework-arduino-avr-minicore/libraries/AVR_examples/src",
+                "/home/felix/.platformio/packages/framework-arduino-avr-minicore/libraries/EEPROM/src",
+                "/home/felix/.platformio/packages/framework-arduino-avr-minicore/libraries/Optiboot_flasher/src",
+                "/home/felix/.platformio/packages/framework-arduino-avr-minicore/libraries/SPI/src",
+                "/home/felix/.platformio/packages/framework-arduino-avr-minicore/libraries/SPI1/src",
+                "/home/felix/.platformio/packages/framework-arduino-avr-minicore/libraries/SoftwareSerial/src",
+                "/home/felix/.platformio/packages/framework-arduino-avr-minicore/libraries/Wire/src",
+                "/home/felix/.platformio/packages/framework-arduino-avr-minicore/libraries/Wire1/src",
+                ""
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "/home/felix/git/AUV-embedded-2023/Powerboard-ATMEGA/include",
+                    "/home/felix/git/AUV-embedded-2023/Powerboard-ATMEGA/src",
+                    "/home/felix/.platformio/packages/framework-arduino-avr-minicore/cores/MiniCore",
+                    "/home/felix/.platformio/packages/framework-arduino-avr-minicore/variants/standard",
+                    "/home/felix/.platformio/packages/framework-arduino-avr-minicore/libraries/AVR_examples/src",
+                    "/home/felix/.platformio/packages/framework-arduino-avr-minicore/libraries/EEPROM/src",
+                    "/home/felix/.platformio/packages/framework-arduino-avr-minicore/libraries/Optiboot_flasher/src",
+                    "/home/felix/.platformio/packages/framework-arduino-avr-minicore/libraries/SPI/src",
+                    "/home/felix/.platformio/packages/framework-arduino-avr-minicore/libraries/SPI1/src",
+                    "/home/felix/.platformio/packages/framework-arduino-avr-minicore/libraries/SoftwareSerial/src",
+                    "/home/felix/.platformio/packages/framework-arduino-avr-minicore/libraries/Wire/src",
+                    "/home/felix/.platformio/packages/framework-arduino-avr-minicore/libraries/Wire1/src",
+                    ""
+                ]
+            },
+            "defines": [
+                "PLATFORMIO=60105",
+                "ARDUINO_AVR_ATmega328",
+                "F_CPU=16000000L",
+                "ARDUINO_ARCH_AVR",
+                "ARDUINO=10808",
+                "__AVR_ATmega328__",
+                ""
+            ],
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "compilerPath": "/home/felix/.platformio/packages/toolchain-atmelavr/bin/avr-gcc",
+            "compilerArgs": [
+                "-mmcu=atmega328",
+                ""
+            ]
+        }
+    ],
+    "version": 4
+}
