@@ -1,4 +1,3 @@
-
 #include <mainpp.h>
 #include <main.h>
 #include <ros.h>
@@ -8,14 +7,15 @@ extern TIM_HandleTypeDef htim2, htim3;
 
 static void updateThrusters(const uint16_t microseconds[8])
 {
-	htim3.Instance->CCR2 = microseconds[SRG_P]; // Timer 3 Ch 2 (T1)
-	htim3.Instance->CCR1 = microseconds[SRG_S]; // Timer 3 Ch 1 (T2)
-	htim2.Instance->CCR2 = microseconds[SWY_BW]; // Timer 2 Ch 2 (T3)
-	htim2.Instance->CCR1 = microseconds[SWY_ST]; // Timer 2 Ch 1 (T4)
-	htim2.Instance->CCR3 = microseconds[HVE_BW_P]; // Timer 2 Ch 3 (T5)
-	htim2.Instance->CCR4 = microseconds[HVE_BW_S]; // Timer 2 Ch 4 (T6)
-	htim3.Instance->CCR4 = microseconds[HVE_ST_S]; // Timer 3 Ch 4 (T7)
-	htim3.Instance->CCR3 = microseconds[HVE_ST_P]; // Timer 3 Ch 3 (T8)
+	htim3.Instance->CCR2 = microseconds[SRG_P]-1; // Timer 3 Ch 2 (T1)
+	htim3.Instance->CCR1 = microseconds[SRG_S]-1; // Timer 3 Ch 1 (T2)
+	htim2.Instance->CCR2 = microseconds[SWY_BW]-1; // Timer 2 Ch 2 (T3)
+	htim2.Instance->CCR1 = microseconds[SWY_ST]-1; // Timer 2 Ch 1 (T4)
+	htim2.Instance->CCR3 = microseconds[HVE_BW_P]-1; // Timer 2 Ch 3 (T5)
+	htim2.Instance->CCR4 = microseconds[HVE_BW_S]-1; // Timer 2 Ch 4 (T6)
+	htim3.Instance->CCR4 = microseconds[HVE_ST_S]-1; // Timer 3 Ch 4 (T7)
+	htim3.Instance->CCR3 = microseconds[HVE_ST_P]-1; // Timer 3 Ch 3 (T8)
+	//__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_1, 1500-1); // This should be equivalent, possibly check later
 }
 
 static void thrustersOff(void)
@@ -65,6 +65,6 @@ void setup(void)
 void loop(void)
 {
 	nh.spinOnce();
-	HAL_Delay(1);
+	HAL_Delay(1); // If issues connecting with rosserial, try increasing this to 100 or 1000
 }
 
